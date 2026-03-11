@@ -5,7 +5,7 @@ namespace galo2
     internal class Program
 
     {
-        static void Main(string[] args)
+        static void Main()
         {
             StartGame();
         }
@@ -21,7 +21,6 @@ namespace galo2
 
             int mode = int.Parse(Console.ReadLine());
 
-            string[,] board = { };
 
             switch (mode)
             {
@@ -31,7 +30,7 @@ namespace galo2
                     string playerNickname = Console.ReadLine();
 
                     Console.WriteLine("Bem-vindo, " + playerNickname + "!");
-                    board = GetBoardSize();
+                    string[,] board = GetBoardSize();
                     StartPlay(playerNickname, null, board);
                     break;
 
@@ -92,16 +91,20 @@ namespace galo2
         static bool MakeMove(string[,] board, int row, int col, string player)
         {
             int n = board.GetLength(0);
+            // boolean to check if move is out of bounds or cell is occupied
+            bool playOutOfBounds = row < 0 || row >= n || col < 0 || col >= n,
+            // boolean to check if cell is occupied (not empty and not just a space)
+            cellOccupied = !string.IsNullOrEmpty(board[row, col]) && board[row, col] != " ";
 
             // validate if move is within board limits
-            if (row < 0 || row >= n || col < 0 || col >= n)
+            if (playOutOfBounds)
             {
                 Console.WriteLine("Jogada fora do tabuleiro! Tente novamente.");
                 return false;
             }
 
             // validate if cell is already occupied
-            if (!string.IsNullOrEmpty(board[row, col]) && board[row, col] != " ")
+            if (cellOccupied)
             {
                 Console.WriteLine("Essa posição já está ocupada! Tente novamente.");
                 return false;
@@ -250,64 +253,31 @@ namespace galo2
         {
             int n = board.GetLength(0);
 
-            // lines
+            // check winner on lines and columns
             for (int i = 0; i < n; i++)
             {
-                bool win = true;
-                for (int j = 0; j < n; j++)
-                {
-                    if (board[i, j] != player)
-                    {
-                        win = false;
-                        break;
-                    }
-                }
-                if (win) return true;
+                if (AllCellsMatch(board, player, row: i)) return true;
+                if (AllCellsMatch(board, player, col: i)) return true;
             }
 
-            // columns
-            for (int j = 0; j < n; j++)
-            {
-                bool win = true;
-                for (int i = 0; i < n; i++)
-                {
-                    if (board[i, j] != player)
-                    {
-                        win = false;
-                        break;
-                    }
-                }
-                if (win) return true;
-            }
-
-            // diagonal
-            bool diag1 = true;
-            for (int i = 0; i < n; i++)
-            {
-                if (board[i, i] != player)
-                {
-                    diag1 = false;
-                    break;
-                }
-            }
-
-            if (diag1) return true;
-
-            // check for diagonal (top-left to bottom-right)
-            bool diag2 = true;
-            for (int i = 0; i < n; i++)
-            {
-
-                // check for anti-diagonal (top-right to bottom-left)
-                if (board[i, n - 1 - i] != player)
-                {
-                    diag2 = false;
-                    break;
-                }
-            }
-            if (diag2) return true;
+            // check winner on diagonals
+            if (AllCellsMatch(board, player)) return true;
+            if (AllCellsMatch(board, player, antiDiag: true)) return true;
 
             return false;
+        }
+
+        static bool AllCellsMatch(string[,] board, string player, int? row = null, int? col = null, bool antiDiag = false)
+        {
+            int n = board.GetLength(0);
+
+            for (int i = 0; i < n; i++)
+            {
+                int r = row ?? (antiDiag ? i : i);
+                int c = col ?? (antiDiag ? n - 1 - i : i);
+                if (board[r, c] != player) return false;
+            }
+            return true;
         }
     }
 }
